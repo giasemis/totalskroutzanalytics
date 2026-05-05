@@ -54,8 +54,9 @@ class Totalskroutzanalytics extends Module
 	{
 		$html = '';
 		$this->migrateLegacyConfig();
-		$module_title = 'Total Skroutz Analytics Module by <a href="http://netcraft.gr" target="_blank" rel="noopener noreferrer">netcraft.gr</a>';
+		$module_title = 'Total Skroutz Analytics Module by <a href="https://netcraft.gr" target="_blank" rel="noopener noreferrer">netcraft.gr</a>';
 		$compat_note = 'This Skroutz Analytics module is compatible with <a href="https://netcraft.gr/product/total-xml-exporter-prestashop-feeds-for-skroutz/" target="_blank" rel="noopener noreferrer">Total XML Exporter</a> feeds';
+		$config_intro = 'Configure your Skroutz Analytics account and COD settings below.';
 		
 		if(Tools::isSubmit('submitUpdate'))
 		{
@@ -97,7 +98,10 @@ class Totalskroutzanalytics extends Module
 		<form action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'" method="post" class="defaultForm form-horizontal">
 			<div class="panel">
 				<div class="panel-heading">'.$module_title.'</div>
-				<div class="panel-body">';
+				<div class="panel-body">
+					<div class="alert alert-info" style="margin-bottom:18px;">
+						'.$config_intro.'
+					</div>';
 				
 		$html .='
 		<div class="form-group">
@@ -136,18 +140,21 @@ class Totalskroutzanalytics extends Module
 		';
 		
 		$html .='
-		<div class="form-group">
-			<div class="col-lg-6 col-lg-offset-3">
-				<button type="submit" name="submitUpdate" class="btn btn-primary" style="font-weight:700; letter-spacing:0; padding:10px 18px; box-shadow:0 2px 0 rgba(0,0,0,0.18); border-width:0;">
-					'.$this->l('Save').'
-				</button>
-				<div style="margin-top:10px; line-height:1.5; color:#6b6f76;">
-					'.$compat_note.'
 				</div>
-			</div>
-		</div>
+				<div class="panel-footer">
+					<div class="form-group" style="margin-bottom:0;">
+						<div class="col-lg-6 col-lg-offset-3">
+							<button type="submit" name="submitUpdate" class="btn btn-primary" style="font-weight:700; letter-spacing:0; padding:10px 18px; box-shadow:0 2px 0 rgba(0,0,0,0.18); border-width:0;">
+								'.$this->l('Save').'
+							</button>
+							<div style="margin-top:10px; line-height:1.5; color:#6b6f76;">
+								'.$compat_note.'
+							</div>
+						</div>
+					</div>
+				</div>
 		';
-		
+
 		$html .='
 			</div>
 		</form>
