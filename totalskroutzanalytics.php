@@ -13,7 +13,7 @@ class Totalskroutzanalytics extends Module
 	{
 		$this->name = 'totalskroutzanalytics';
 		$this->tab = 'front_office_features';
-		$this->version = '1.1';
+		$this->version = '2.0';
 		$this->author = 'netcraft.gr';
 		$this->need_instance = 0;
 
@@ -24,7 +24,7 @@ class Totalskroutzanalytics extends Module
 	 	parent::__construct();
 
 		$this->displayName = $this->l('Skroutz Analytics for Total XML Exporter');
-		$this->description = $this->l('Adds a block.');
+		$this->description = $this->l('Complete Skroutz Analytics module');
 		$this->confirmUninstall = $this->l('Are you sure you want to delete this module?');
 	}
 	
