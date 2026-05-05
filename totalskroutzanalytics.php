@@ -7,6 +7,7 @@ class Totalskroutzanalytics extends Module
 {
 
 	protected $_errors = array();
+	private $config_prefix = 'TOTALSKROUTZANALYTICS_';
 
 
 	public function __construct()
@@ -41,9 +42,9 @@ class Totalskroutzanalytics extends Module
 	public function uninstall()
 	{
 		if (!parent::uninstall() OR
-			!Configuration::deleteByName('TOTALSKROUTZANALYTICS_ID') OR
-			!Configuration::deleteByName('TOTALSKROUTZANALYTICS_COD_PAYMENT') OR
-			!Configuration::deleteByName('TOTALSKROUTZANALYTICS_COD_FEE')
+			!Configuration::deleteByName($this->getConfigKey('ID')) OR
+			!Configuration::deleteByName($this->getConfigKey('COD_PAYMENT')) OR
+			!Configuration::deleteByName($this->getConfigKey('COD_FEE'))
 			)
 			return false;
 		return true;
@@ -52,11 +53,14 @@ class Totalskroutzanalytics extends Module
 	public function getContent()
 	{
 		$html = '';
+		$this->migrateLegacyConfig();
+		$module_title = 'Total Skroutz Analytics Module by <a href="http://netcraft.gr" target="_blank" rel="noopener noreferrer">netcraft.gr</a>';
+		$compat_note = 'This Skroutz Analytics module is compatible with <a href="https://netcraft.gr/product/total-xml-exporter-prestashop-feeds-for-skroutz/" target="_blank" rel="noopener noreferrer">Total XML Exporter</a> feeds';
 		
 		if(Tools::isSubmit('submitUpdate'))
 		{
-			Configuration::updateValue('TOTALSKROUTZANALYTICS_ID', trim(Tools::getValue('accountid')));
-			Configuration::updateValue('TOTALSKROUTZANALYTICS_COD_PAYMENT', trim(Tools::getValue('skroutz_cod_payment_name', '')));
+			Configuration::updateValue($this->getConfigKey('ID'), trim(Tools::getValue('accountid')));
+			Configuration::updateValue($this->getConfigKey('COD_PAYMENT'), trim(Tools::getValue('skroutz_cod_payment_name', '')));
 
 			$cod_fee_raw = trim(Tools::getValue('skroutz_cod_fee', ''));
 			$cod_fee_raw = str_replace(',', '.', $cod_fee_raw);
@@ -64,7 +68,7 @@ class Totalskroutzanalytics extends Module
 			if ($cod_fee < 0) {
 				$cod_fee = 0.0;
 			}
-			Configuration::updateValue('TOTALSKROUTZANALYTICS_COD_FEE', $cod_fee);
+			Configuration::updateValue($this->getConfigKey('COD_FEE'), $cod_fee);
 			$html .= $this->displayConfirmation($this->l('Settings Updated'));
 		}
 
@@ -86,19 +90,20 @@ class Totalskroutzanalytics extends Module
 		}
 		usort($payment_methods, array($this, 'sortPaymentMethodsByDisplayName'));
 
-		$selected_cod_payment = Configuration::get('TOTALSKROUTZANALYTICS_COD_PAYMENT');
-		$cod_fee = (float)Configuration::get('TOTALSKROUTZANALYTICS_COD_FEE');
+		$selected_cod_payment = Configuration::get($this->getConfigKey('COD_PAYMENT'));
+		$cod_fee = (float)Configuration::get($this->getConfigKey('COD_FEE'));
 		
 		$html .= '
 		<form action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'" method="post" class="defaultForm form-horizontal">
 			<div class="panel">
-				<div class="panel-heading">'.$this->l('Settings').'</div>';
+				<div class="panel-heading">'.$module_title.'</div>
+				<div class="panel-body">';
 				
 		$html .='
 		<div class="form-group">
 			<label class="control-label col-lg-3">'.$this->l('Shop Account ID').'</label>
 			<div class="col-lg-6">
-				<input type="text" name="accountid" class="form-control" value="'.Tools::safeOutput(Configuration::get('TOTALSKROUTZANALYTICS_ID')).'">
+				<input type="text" name="accountid" class="form-control" value="'.Tools::safeOutput(Configuration::get($this->getConfigKey('ID'))).'">
 			</div>
 		</div>
 		';
@@ -131,7 +136,16 @@ class Totalskroutzanalytics extends Module
 		';
 		
 		$html .='
-		<input type="submit" name="submitUpdate" value="'.$this->l('Save').'" class="btn btn-default">
+		<div class="form-group">
+			<div class="col-lg-6 col-lg-offset-3">
+				<button type="submit" name="submitUpdate" class="btn btn-primary" style="font-weight:700; letter-spacing:0; padding:10px 18px; box-shadow:0 2px 0 rgba(0,0,0,0.18); border-width:0;">
+					'.$this->l('Save').'
+				</button>
+				<div style="margin-top:10px; line-height:1.5; color:#6b6f76;">
+					'.$compat_note.'
+				</div>
+			</div>
+		</div>
 		';
 		
 		$html .='
@@ -146,10 +160,31 @@ class Totalskroutzanalytics extends Module
 	{
 		return strcasecmp($a['display_name'], $b['display_name']);
 	}
+
+	private function getConfigKey($suffix)
+	{
+		return $this->config_prefix . $suffix;
+	}
+
+	private function migrateLegacyConfig()
+	{
+		$legacyMap = array(
+			'ID' => 'SKROUTZANALYTICS_ID',
+			'COD_PAYMENT' => 'SKROUTZANALYTICS_COD_PAYMENT',
+			'COD_FEE' => 'SKROUTZANALYTICS_COD_FEE',
+		);
+
+		foreach ($legacyMap as $suffix => $legacyKey) {
+			$newKey = $this->getConfigKey($suffix);
+			if (!Configuration::get($newKey) && Configuration::get($legacyKey)) {
+				Configuration::updateValue($newKey, Configuration::get($legacyKey));
+			}
+		}
+	}
 	
 	public function hookHeader($params)
 	{
-		$skroutz_id = Configuration::get('TOTALSKROUTZANALYTICS_ID');
+		$skroutz_id = Configuration::get($this->getConfigKey('ID'));
 		
 		$this->context->smarty->assign(array(
 			'skroutz_id' => $skroutz_id
@@ -163,11 +198,11 @@ class Totalskroutzanalytics extends Module
 	{
 		//var_dump($params['order']);
 
-		$skroutz_id = Configuration::get('TOTALSKROUTZANALYTICS_ID');
+		$skroutz_id = Configuration::get($this->getConfigKey('ID'));
 		$order = $params['order'];
 		$products = $order->getProducts();
-		$cod_payment_name = Configuration::get('TOTALSKROUTZANALYTICS_COD_PAYMENT');
-		$cod_fee = (float)Configuration::get('TOTALSKROUTZANALYTICS_COD_FEE');
+		$cod_payment_name = Configuration::get($this->getConfigKey('COD_PAYMENT'));
+		$cod_fee = (float)Configuration::get($this->getConfigKey('COD_FEE'));
 
 		// var_dump($products);
 		$this->context->smarty->assign(array(
